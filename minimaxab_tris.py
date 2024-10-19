@@ -211,71 +211,85 @@ def punti(stato):
     return punteggio
 
 
-def minimax(stato, depth, giocatore):
+def minimax(stato, depth, giocatore, alpha=-infinity, beta=infinity):
     '''
-    algoritmo gioco computer
+    Algoritmo Minimax con Alpha-Beta Pruning
 
     Parametri
     ---------
     stato : list
-        matrice del campo da gioco
+        Matrice del campo da gioco
     depth : int
-        quante caselle libere ci sono, quindi quanto andare
-        in frofondità con le possibili partite
+        Profondità, ovvero quante caselle libere ci sono
     giocatore : int
-        assume valori +-1 a seconda di chi gioca
+        Assume valori +1 (Engine) o -1 (Utente)
+    alpha : float
+        Il valore alpha per il pruning (miglior valore per il Max)
+    beta : float
+        Il valore beta per il pruning (miglior valore per il Min)
 
     Return
     ---------
     best : list
-        [x migliore, y migliore, miglior punteggio]
+        Lista contenente [x, y, punteggio migliore]
     '''
-    def maxplayer(stato, depth, giocatore):
 
+    # Funzione massimizzante (Engine)
+    def maxplayer(stato, depth, alpha, beta):
         best = [-1, -1, -infinity]
 
-        #controllo fine gioco
+        # Controllo fine gioco
         if depth == 0 or game_over(stato):
             punteggio = punti(stato)
             return [-1, -1, punteggio]
 
         for cella in libero(stato):
             x, y = cella[0], cella[1]
-            stato[x][y] = giocatore
-            punteggio = minplayer(stato, depth-1, -giocatore)
+            stato[x][y] = Engine
+            punteggio = minplayer(stato, depth-1, alpha, beta)
             stato[x][y] = 0
             punteggio[0], punteggio[1] = x, y
+
             if punteggio[2] > best[2]:
                 best = punteggio
-            if punteggio[2] == 1:
-                break
+
+            alpha = max(alpha, best[2])
+            if beta <= alpha:
+                break  # Pruning
+
         return best
 
-    def minplayer(stato, depth, giocatore):
-
+    # Funzione minimizzante (Utente)
+    def minplayer(stato, depth, alpha, beta):
         best = [-1, -1, +infinity]
 
-        #controllo fine gioco
+        # Controllo fine gioco
         if depth == 0 or game_over(stato):
             punteggio = punti(stato)
             return [-1, -1, punteggio]
 
         for cella in libero(stato):
             x, y = cella[0], cella[1]
-            stato[x][y] = giocatore
-            punteggio = maxplayer(stato, depth-1, -giocatore)
+            stato[x][y] = Utente
+            punteggio = maxplayer(stato, depth-1, alpha, beta)
             stato[x][y] = 0
             punteggio[0], punteggio[1] = x, y
+
             if punteggio[2] < best[2]:
                 best = punteggio
-            if punteggio[2] == -1:
-                break
+
+            beta = min(beta, best[2])
+            if beta <= alpha:
+                break  # Pruning
+
         return best
 
+    # Inizia con il giocatore corrente
     if giocatore == Engine:
-        return maxplayer(stato, depth, giocatore)
+        return maxplayer(stato, depth, alpha, beta)
     else:
-        return minplayer(stato, depth, -giocatore)
+        return minplayer(stato, depth, alpha, beta)
+    
 
 def turno_computer(c_s, u_s):
     '''
